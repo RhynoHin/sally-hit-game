@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Sally 扑傻瓜</title>
+<style>
+body { font-family: sans-serif; text-align: center; background: #fce4ec; }
+h1 { margin-top:20px; }
+#game-container { width: 300px; margin: auto; display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 30px;}
+.hole { position: relative; width: 100px; height: 100px; border-radius: 50%; background: #795548; overflow: hidden; cursor: pointer; }
+.hole.active { background: #5d4037; }
+.mole { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.5rem; display: none; }
+.hole.active .mole { display: block; }
+#scoreboard { margin-top: 20px; font-size: 1.5rem; }
+#start-btn { margin-top: 20px; padding: 10px 20px; font-size: 1rem; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Sally 扑傻瓜</h1>
+<div id="scoreboard">
+分數: <span id="score">0</span> | 時間: <span id="time">30</span>
+</div>
+<button id="start-btn">開始遊戲</button>
+<div id="game-container"></div>
+<script>
+const gameContainer = document.getElementById('game-container');
+const scoreElem = document.getElementById('score');
+const timeElem = document.getElementById('time');
+const startBtn = document.getElementById('start-btn');
+let score = 0;
+let time = 30;
+let gameInterval;
+let moleTimeout;
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playTone(freq) {
+ const oscillator = audioCtx.createOscillator();
+ oscillator.type = 'square';
+ oscillator.frequency.value = freq;
+ oscillator.connect(audioCtx.destination);
+ oscillator.start();
+ oscillator.stop(audioCtx.currentTime + 0.15);
+}
+function createHoles() {
+  for (let i = 0; i < 9; i++) {
+    const hole = document.createElement('div');
+    hole.classList.add('hole');
+    const mole = document.createElement('div');
+    mole.classList.add('mole');
+    mole.textContent = '🐰';
+    hole.appendChild(mole);
+    hole.addEventListener('click', () => {
+      if (hole.classList.contains('active')) {
+        score++;
+        scoreElem.textContent = score;
+        hole.classList.remove('active');
+        playTone(800);
+      } else {
+        playTone(400);
+      }
+    });
+    gameContainer.appendChild(hole);
+  }
+}
+function randomHole() {
+  const holes = document.querySelectorAll('.hole');
+  const idx = Math.floor(Math.random() * holes.length);
+  return holes[idx];
+}
+function showMole() {
+  const hole = randomHole();
+  hole.classList.add('active');
+  moleTimeout = setTimeout(() => {
+    hole.classList.remove('active');
+    showMole();
+  }, 800);
+}
+function startGame() {
+  score = 0;
+  time = 30;
+  scoreElem.textContent = score;
+  timeElem.textContent = time;
+  document.querySelectorAll('.hole').forEach(hole => hole.classList.remove('active'));
+  showMole();
+  gameInterval = setInterval(() => {
+    time--;
+    timeElem.textContent = time;
+    if (time <= 0) {
+      clearInterval(gameInterval);
+      clearTimeout(moleTimeout);
+      alert('遊戲結束! 你的分數: ' + score);
+    }
+  }, 1000);
+}
+startBtn.addEventListener('click', startGame);
+createHoles();
+</script>
+</body>
+</html>
